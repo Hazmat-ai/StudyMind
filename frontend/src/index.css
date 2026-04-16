@@ -1,0 +1,273 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ══════════════════════════════════════════════════════════
+   CSS Custom Properties — auto-switch via .dark on html
+   ══════════════════════════════════════════════════════════ */
+:root {
+  /* backgrounds */
+  --c-bg:          #f9fafb;
+  --c-bg-card:     #ffffff;
+  --c-bg-input:    #ffffff;
+  --c-bg-muted:    #f3f4f6;
+  --c-bg-hover:    #f3f4f6;
+  /* borders */
+  --c-border:      #e5e7eb;
+  --c-border-hover:#d1d5db;
+  /* text */
+  --c-text:        #111827;
+  --c-text-muted:  #6b7280;
+  --c-text-hint:   #9ca3af;
+  /* brand */
+  --c-violet:      #7c3aed;
+  --c-violet-bg:   rgba(124,58,237,0.08);
+  --c-violet-border: rgba(124,58,237,0.25);
+  /* glow */
+  --c-glow:        0 0 40px rgba(124,58,237,0.08), 0 4px 24px rgba(0,0,0,0.06);
+  /* ambient gradient */
+  --c-ambient:     radial-gradient(ellipse 80% 40% at 50% -10%, rgba(124,58,237,0.07) 0%, transparent 60%);
+}
+
+html.dark {
+  /* backgrounds */
+  --c-bg:          #09090b;
+  --c-bg-card:     #111113;
+  --c-bg-input:    #111113;
+  --c-bg-muted:    #18181b;
+  --c-bg-hover:    #1c1c1f;
+  /* borders */
+  --c-border:      #27272a;
+  --c-border-hover:#3f3f46;
+  /* text */
+  --c-text:        #fafafa;
+  --c-text-muted:  #a1a1aa;
+  --c-text-hint:   #52525b;
+  /* brand */
+  --c-violet:      #a78bfa;
+  --c-violet-bg:   rgba(167,139,250,0.12);
+  --c-violet-border: rgba(167,139,250,0.3);
+  /* glow */
+  --c-glow:        0 0 40px rgba(139,92,246,0.2), 0 8px 32px rgba(0,0,0,0.6);
+  /* ambient gradient */
+  --c-ambient:     radial-gradient(ellipse 80% 60% at 50% -20%, rgba(139,92,246,0.18) 0%, transparent 60%),
+                   radial-gradient(ellipse 50% 40% at 100% 100%, rgba(99,102,241,0.1) 0%, transparent 50%);
+}
+
+/* ── Base ─────────────────────────────────────────────── */
+@layer base {
+  html {
+    font-family: 'Inter', sans-serif;
+    scroll-behavior: smooth;
+  }
+
+  ::selection {
+    background-color: rgba(124,58,237,0.2);
+    color: var(--c-text);
+  }
+}
+
+/* ── Semantic utilities (use CSS vars) ─────────────────── */
+@layer components {
+  /* App root wrapper */
+  .theme-root {
+    background-color: var(--c-bg);
+    background-image: var(--c-ambient);
+    background-attachment: fixed;
+    color: var(--c-text);
+    min-height: 100vh;
+    transition: background-color 0.35s ease, color 0.25s ease;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Cards / panels */
+  .card {
+    background-color: var(--c-bg-card);
+    border: 1px solid var(--c-border);
+    border-radius: 1rem;
+    transition: background-color 0.25s ease, border-color 0.25s ease;
+  }
+
+  .card-hover:hover {
+    border-color: var(--c-border-hover);
+    transform: translateY(-2px);
+  }
+
+  /* Inputs & text areas */
+  .input-base {
+    background-color: var(--c-bg-input);
+    border: 1px solid var(--c-border);
+    color: var(--c-text);
+    transition: background-color 0.25s ease, border-color 0.25s ease;
+  }
+
+  /* Muted surface */
+  .surface-muted {
+    background-color: var(--c-bg-muted);
+    border: 1px solid var(--c-border);
+    transition: background-color 0.25s ease;
+  }
+
+  /* Text colors */
+  .text-primary   { color: var(--c-text);       }
+  .text-secondary { color: var(--c-text-muted);  }
+  .text-hint      { color: var(--c-text-hint);   }
+
+  /* Violet accent button */
+  .btn-violet-ghost {
+    background-color: var(--c-violet-bg);
+    border: 1px solid var(--c-violet-border);
+    color: var(--c-violet);
+    transition: all 0.2s ease;
+  }
+  .btn-violet-ghost:hover {
+    filter: brightness(1.1);
+  }
+
+  /* Ghost button */
+  .btn-ghost {
+    background-color: var(--c-bg-muted);
+    border: 1px solid var(--c-border);
+    color: var(--c-text-muted);
+    transition: all 0.2s ease;
+  }
+  .btn-ghost:hover {
+    background-color: var(--c-bg-hover);
+    border-color: var(--c-border-hover);
+    color: var(--c-text);
+  }
+
+  /* Nav link */
+  .nav-link {
+    color: var(--c-text-muted);
+    border-radius: 0.5rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  .nav-link:hover {
+    color: var(--c-text);
+    background-color: var(--c-bg-muted);
+  }
+
+  /* Glow card */
+  .glow-card {
+    box-shadow: var(--c-glow);
+  }
+
+  /* Tab bar */
+  .tab-bar {
+    background-color: var(--c-bg-muted);
+    border: 1px solid var(--c-border);
+    padding: 0.25rem;
+    border-radius: 0.75rem;
+    transition: background-color 0.25s ease;
+  }
+
+  .tab-btn {
+    color: var(--c-text-muted);
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.625rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.25s ease;
+  }
+  .tab-btn:hover:not(.tab-btn-active) {
+    color: var(--c-text);
+    background-color: var(--c-bg-hover);
+  }
+  .tab-btn-active {
+    background-color: #7c3aed;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(124,58,237,0.35);
+  }
+
+  .tab-count {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.375rem;
+    background-color: var(--c-bg-hover);
+    color: var(--c-text-muted);
+    border: 1px solid var(--c-border);
+    transition: all 0.25s;
+  }
+  .tab-btn-active .tab-count {
+    background-color: rgba(255,255,255,0.2);
+    color: #ffffff;
+    border-color: transparent;
+  }
+
+  /* Feature badge */
+  .feature-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background-color: var(--c-bg-card);
+    border: 1px solid var(--c-border);
+    color: var(--c-text-muted);
+    border-radius: 9999px;
+    padding: 0.25rem 0.75rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    transition: all 0.25s ease;
+  }
+
+  /* Answer reveal box */
+  .answer-box {
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+  }
+
+  html.dark .answer-box {
+    background-color: rgba(21,128,61,0.08);
+    border-color: rgba(21,128,61,0.2);
+  }
+
+  /* Error box */
+  .error-box {
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    border-radius: 0.75rem;
+    padding: 1rem;
+  }
+
+  html.dark .error-box {
+    background-color: rgba(220,38,38,0.08);
+    border-color: rgba(220,38,38,0.25);
+    color: #f87171;
+  }
+}
+
+/* ── Animations ─────────────────────────────────────── */
+@layer utilities {
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes shimmer {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  @keyframes spin-slow {
+    to { transform: rotate(360deg); }
+  }
+
+  .animate-fade-up {
+    animation: fade-up 0.5s ease-out forwards;
+  }
+}
