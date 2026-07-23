@@ -1,0 +1,9 @@
+SELECT memberSurname, memberForename, broadCount
+FROM (
+  SELECT member.memberSurname, member.memberForename, COUNT(memberBroad.memberBroadBroadId) AS broadCount
+  FROM member
+  JOIN memberBroad ON member.memberId = memberBroad.memberBroadMemberId
+  GROUP BY member.memberId, member.memberSurname, member.memberForename
+) AS broadCounts
+WHERE broadCount >= 9
+ORDER BY memberSurname, memberForename

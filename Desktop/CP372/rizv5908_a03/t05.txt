@@ -1,0 +1,9 @@
+SELECT memberSurname, memberForename, pubCount
+FROM (
+  SELECT member.memberSurname, member.memberForename, COUNT(pub.pubId) AS pubCount
+  FROM member
+  JOIN pub ON member.memberId = pub.pubMemberId
+  GROUP BY member.memberId, member.memberSurname, member.memberForename
+) AS pubCounts
+WHERE pubCount >= 5
+ORDER BY memberSurname, memberForename

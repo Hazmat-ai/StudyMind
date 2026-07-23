@@ -1,0 +1,4 @@
+SELECT broadDesc
+FROM vMemberBroad
+WHERE memberId = 49
+ORDER BY broadDesc

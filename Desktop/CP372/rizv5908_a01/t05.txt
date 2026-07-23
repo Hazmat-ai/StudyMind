@@ -1,0 +1,4 @@
+SELECT pubTitle
+FROM pub
+WHERE pubMemberId = 38
+ORDER BY pubTitle

@@ -1,0 +1,4 @@
+SELECT pubTitle
+FROM pub
+WHERE pubPubType = 'a'
+ORDER BY pubTitle

@@ -1,0 +1,5 @@
+SELECT member.memberSurname, member.memberForename, COUNT(memberNarrow.memberNarrowNarrowId)
+FROM member
+LEFT JOIN memberNarrow ON member.memberId = memberNarrow.memberNarrowMemberId
+GROUP BY member.memberId, member.memberSurname, member.memberForename
+ORDER BY member.memberSurname, member.memberForename

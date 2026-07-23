@@ -1,0 +1,5 @@
+SELECT pubType.pubTypeDesc, COUNT(pub.pubId)
+FROM pubType
+JOIN pub ON pubType.pubType = pub.pubPubType
+GROUP BY pubType.pubType, pubType.pubTypeDesc
+ORDER BY pubType.pubTypeDesc

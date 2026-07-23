@@ -1,0 +1,7 @@
+SELECT broad.broadDesc
+FROM broad
+WHERE broad.broadId NOT IN (
+  SELECT narrow.narrowBroadId
+  FROM narrow
+)
+ORDER BY broad.broadDesc

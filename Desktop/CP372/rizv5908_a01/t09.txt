@@ -1,0 +1,4 @@
+SELECT memberSurname, memberForename
+FROM vMemberBroad
+WHERE broadDesc = 'Doctrine'
+ORDER BY memberSurname, memberForename

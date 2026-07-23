@@ -1,0 +1,4 @@
+SELECT narrowDesc
+FROM vBroadNarrow
+WHERE broadDesc = 'Doctrine'
+ORDER BY narrowDesc

@@ -1,0 +1,6 @@
+SELECT member.memberSurname, member.memberForename, pub.pubTitle
+FROM member
+JOIN pub ON member.memberId = pub.pubMemberId
+JOIN pubType ON pub.pubPubType = pubType.pubType
+WHERE pubType.pubTypeDesc = 'conference paper' AND pub.pubTitle LIKE '%China%'
+ORDER BY pub.pubTitle
