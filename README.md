@@ -1,234 +1,77 @@
-# StudyMind — AI-Powered Study Assistant
+# StudyMind
 
-A full-stack web app that turns your lecture notes, textbook excerpts, and PDFs into flashcards, summaries, practice questions, and key concept breakdowns — instantly. Built with FastAPI, React, and the Claude API.
+StudyMind turns approved lecture notes or a text PDF into a summary, flashcards, practice questions and connected concepts. React 18 + Vite + Tailwind provide the interface; FastAPI, asynchronous SQLAlchemy, PostgreSQL, Alembic and Anthropic provide the API.
 
-![StudyMind Demo](docs/demo.gif)
+This patch replaces placeholder account/library screens and sample fallback results with persistent, private account flows. Missing services produce honest errors. It adds verification/recovery email, rotating sessions, password changes, account deletion/export, bounded PDF parsing, generation quotas and idempotency, tests and deployment configuration. It is a release candidate: complete the checks in [docs/RELEASE.md](docs/RELEASE.md) before announcing a launch.
 
----
+## Local setup — macOS/Linux
 
-## Why I Built This
+Use Python **3.11 or 3.12** and Node **24**. `python3` must resolve to one of those supported Python versions; there is no requirement for a command named `python3.12`. PostgreSQL is required in production; local SQLite is supported for development.
 
-As a TA for Calculus and Information Technology at Wilfrid Laurier University, I watch students struggle every week with the same problem: they have the notes, but they don't know how to study from them. Highlighting and re-reading doesn't work. Active recall does — but making flashcards and practice questions by hand takes forever.
-
-StudyMind automates the part that students skip. Paste your notes in, get a full study set out. It's the tool I wish existed when I was studying for midterms.
-
----
-
-## Features
-
-- **AI-generated flashcards** — term/definition pairs extracted from your content
-- **Concise summary** — the key ideas in plain language, not a wall of bullet points
-- **Practice questions** — short-answer and multiple choice with revealed answers
-- **Key concept map** — a list of the most important terms and how they connect
-- **Save study sets** — create an account, save your sets, come back later
-- **PDF upload** — paste text or upload a PDF directly
-- **Clean, focused UI** — designed to get out of your way while you study
-
----
-
-## Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Frontend | React 18, Tailwind CSS, React Router |
-| Backend | Python 3.11, FastAPI |
-| Database | PostgreSQL + SQLAlchemy + Alembic |
-| AI | Anthropic Claude API (claude-sonnet) |
-| Auth | JWT (python-jose + passlib) |
-| PDF parsing | PyMuPDF (fitz) |
-| Deployment | Vercel (frontend), Railway (backend + DB) |
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+
-- Python 3.11+
-- PostgreSQL (local or Railway)
-- Anthropic API key
-
-### 1. Clone the repo
+Run from the repository root, after applying the patch:
 
 ```bash
-git clone https://github.com/yourusername/studymind.git
-cd studymind
+python3 --version
+node --version
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r backend/requirements-dev.txt
+cp backend/.env.example backend/.env
+python -c 'import secrets; print(secrets.token_hex(32))'
 ```
 
-### 2. Backend setup
+Paste the generated secret into `SECRET_KEY` in `backend/.env`. Set `ANTHROPIC_API_KEY` and an active `ANTHROPIC_MODEL` from your provider account. Configure SMTP for verification and recovery. Without AI configuration, saved sets remain usable but generation is disabled. Without SMTP, registration requiring verification and password recovery return 503. No development inbox, fake provider or hardcoded account is enabled in the deployed application.
+
+For a local-only demonstration without email, set `REQUIRE_EMAIL_VERIFICATION=false` in `backend/.env`. Production settings reject this option. Never share a development instance publicly.
 
 ```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
+python -m alembic -c backend/alembic.ini upgrade head
+python -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --no-proxy-headers --no-access-log
 ```
 
-Create a `.env` file in `/backend`:
-
-```env
-DATABASE_URL=postgresql://user:password@localhost:5432/studymind
-ANTHROPIC_API_KEY=your_key_here
-SECRET_KEY=your_jwt_secret_here
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=60
-```
-
-Run migrations and start the server:
+In a second terminal at the repository root:
 
 ```bash
-alembic upgrade head
-uvicorn app.main:app --reload
+npm --prefix frontend ci
+npm --prefix frontend run dev
 ```
 
-API runs at `http://localhost:8000`. Docs at `http://localhost:8000/docs`.
+Open <http://localhost:5173>. Keep the exact `localhost` host: the API rejects unexpected hosts/origins. Vite forwards `/api` to the backend. Production uses the same-origin proxy described in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
-### 3. Frontend setup
+`backend/.env` is loaded from the repository root or backend directory. SQLite paths are relative to the command's working directory, so use the repository root consistently. The initial migration targets an empty database. Existing databases created by the original application need a backed-up, reviewed data migration; do not stamp them or drop their tables to bypass errors.
+
+## Verification
 
 ```bash
+source .venv/bin/activate
+python -m pytest -q backend/tests
+ruff check backend --select F401
+ruff format --check backend
+pip-audit -r backend/requirements-dev.txt --progress-spinner off
+npm --prefix frontend run lint
+npm --prefix frontend run test:unit
+npm --prefix frontend run build
+node scripts/audit-web.mjs
 cd frontend
-npm install
+npx playwright install --with-deps chromium
+npm run test:e2e
 ```
 
-Create a `.env.local` file in `/frontend`:
+The e2e runner requires the activated Python environment and free ports 8000/5173. It runs a temporary SQLite database and an explicitly injected AI fixture in `scripts/e2e_server.py`. That QA server is excluded from the backend image. These tests verify the full UI/API flow, not live AI quality or email delivery. Playwright must download its matching browser after installation/upgrades; missing browser binaries are an environment failure, not a passing test.
 
-```env
-VITE_API_URL=http://localhost:8000
-```
+PostgreSQL integration tests run when `TEST_DATABASE_URL` points to a **disposable dedicated** PostgreSQL database; they delete its StudyMind test users/jobs and verify real migrations, concurrent quotas, idempotency and atomic rate limits. Never use a production database. CI runs Python 3.11/3.12, PostgreSQL 16, frontend checks, Chromium accessibility/e2e, audits and image builds.
 
-Start the dev server:
+## API and data
 
-```bash
-npm run dev
-```
+- JSON routes live under `/api`; the OpenAPI document is `/api/openapi.json`.
+- Register/login/refresh/logout, recovery and verification writes require a trusted `Origin` plus the CSRF nonce from `GET /api/auth/csrf`. Login uses JSON email/password, not an OAuth password form.
+- Private routes require `Authorization: Bearer <access token>`. Tokens expire within 60 minutes and reference a revocable database session. Refresh cookies rotate and expire absolutely after seven days; access tokens stay in browser memory.
+- `POST /api/generate` requires explicit `consent_to_provider: true`, source text of 50–12,000 characters, bounded options and an `Idempotency-Key`. Repeat the same key/payload to recover a result; a different payload with that key is rejected. Failed/expired jobs require a new generation intent.
+- Up to 30 flashcards and 15 questions; PDFs up to 5 MiB/40 pages. Scanned, encrypted, malformed or oversized PDFs fail without fabricated material.
+- Save a generation with `POST /api/studysets`, using its `generation_id`. Rename, list, fetch, export and delete saved sets under that prefix. Another user's identifiers return 404. Save at most 100 sets; pagination is bounded.
+- Unsaved output is recoverable for one hour. Quota reservations cover a rolling 24 hours. The hourly maintenance command purges expired data; see the operations guide. Original source notes are saved only when the user chooses to include them.
 
-App runs at `http://localhost:5173`.
+## Security and release status
 
----
-
-## Project Structure
-
-```
-studymind/
-├── backend/
-│   ├── app/
-│   │   ├── main.py              # FastAPI app entry point
-│   │   ├── routers/
-│   │   │   ├── auth.py          # Register, login, JWT
-│   │   │   ├── generate.py      # AI generation endpoint
-│   │   │   └── studysets.py     # Save/load/delete study sets
-│   │   ├── models/
-│   │   │   ├── user.py          # User model
-│   │   │   └── studyset.py      # StudySet + Card models
-│   │   ├── schemas/             # Pydantic request/response schemas
-│   │   ├── services/
-│   │   │   ├── ai.py            # Claude API calls + prompt logic
-│   │   │   └── pdf.py           # PDF text extraction
-│   │   └── database.py          # SQLAlchemy session setup
-│   ├── alembic/                 # DB migrations
-│   └── requirements.txt
-│
-├── frontend/
-│   ├── src/
-│   │   ├── pages/
-│   │   │   ├── Home.jsx         # Landing + input page
-│   │   │   ├── Results.jsx      # Generated study set view
-│   │   │   ├── Dashboard.jsx    # Saved sets list
-│   │   │   └── Auth.jsx         # Login / register
-│   │   ├── components/
-│   │   │   ├── FlashCard.jsx    # Flip card interaction
-│   │   │   ├── PracticeQ.jsx    # Question reveal component
-│   │   │   ├── SummaryPanel.jsx
-│   │   │   └── ConceptList.jsx
-│   │   ├── hooks/
-│   │   │   ├── useAuth.js       # Auth context + token handling
-│   │   │   └── useStudySet.js   # Generate + save logic
-│   │   └── api/
-│   │       └── client.js        # Axios instance + interceptors
-│   └── package.json
-│
-└── README.md
-```
-
----
-
-## Key Technical Decisions
-
-**Why FastAPI over Flask?**
-FastAPI gives automatic OpenAPI docs, native async support, and Pydantic validation out of the box. For an AI app where the bottleneck is the LLM API call (not the DB), async matters — the server can handle other requests while waiting on Claude rather than blocking the thread.
-
-**Why structured prompting over a chat interface?**
-I prompt Claude to return strict JSON with defined keys (`summary`, `flashcards`, `questions`, `concepts`). This makes the frontend rendering deterministic and removes the need to parse freeform markdown. The tradeoff is less flexibility in the AI output, which is the right call for a tool app where consistency matters more than creativity.
-
-**Why PyMuPDF for PDFs?**
-Faster and more reliable text extraction than pdfplumber for typical student PDFs (lecture slides exported as PDF, textbook chapters). Falls back gracefully on scanned documents by returning a helpful error rather than garbage output.
-
-**Why JWT over sessions?**
-The frontend and backend are on separate domains (Vercel + Railway), so cookie-based sessions require more CORS configuration and SameSite handling. JWTs are stateless and work cleanly across origins. Tokens expire in 60 minutes with refresh on activity.
-
----
-
-## API Reference
-
-### `POST /generate`
-Generates a study set from text input.
-
-**Request body:**
-```json
-{
-  "content": "string (raw text or extracted PDF text)",
-  "options": {
-    "num_flashcards": 10,
-    "num_questions": 5,
-    "difficulty": "university"
-  }
-}
-```
-
-**Response:**
-```json
-{
-  "summary": "string",
-  "flashcards": [{ "term": "string", "definition": "string" }],
-  "questions": [{ "question": "string", "answer": "string", "type": "short_answer" }],
-  "concepts": [{ "term": "string", "related": ["string"] }]
-}
-```
-
-### `POST /auth/register` / `POST /auth/login`
-Standard JWT auth flow. Login returns `access_token`.
-
-### `GET /studysets` / `POST /studysets` / `DELETE /studysets/{id}`
-CRUD for saved study sets. All routes require `Authorization: Bearer <token>`.
-
----
-
-## Deployment
-
-**Frontend (Vercel):**
-Connect the `/frontend` directory. Set `VITE_API_URL` to your Railway backend URL.
-
-**Backend (Railway):**
-Connect the `/backend` directory. Railway auto-detects Python. Add environment variables in the Railway dashboard. Provision a Postgres plugin and Railway injects `DATABASE_URL` automatically.
-
-Run migrations on first deploy:
-```bash
-railway run alembic upgrade head
-```
-
----
-
-## Roadmap
-
-- [ ] Spaced repetition scheduling (SM-2 algorithm)
-- [ ] Export to Anki-compatible `.apkg` format
-- [ ] Chrome extension to generate from any webpage
-- [ ] Collaborative study sets (share with classmates)
-- [ ] Better handling of math notation in STEM content
-
----
-
-## License
-
-MIT
+See [SECURITY.md](SECURITY.md), [docs/QA-UAT.md](docs/QA-UAT.md), [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) and [docs/RELEASE.md](docs/RELEASE.md). Security checks reduce risk; they do not certify the application. Operator-specific SMTP, live AI, HTTPS/proxy behavior, database backup/restore, privacy policy and human UAT require evidence before launch. No keys, domains, human sign-offs or live-service results are invented by this patch.

@@ -1,0 +1,12 @@
+{
+  "commit": "replace-with-exact-40-character-release-commit",
+  "gates": {
+    "ci_postgres_browser_containers": {"approved": false, "reviewer": "", "date": "", "evidence": ""},
+    "live_ai_quality_and_budget": {"approved": false, "reviewer": "", "date": "", "evidence": ""},
+    "smtp_verification_recovery": {"approved": false, "reviewer": "", "date": "", "evidence": ""},
+    "human_accessibility_mobile_uat": {"approved": false, "reviewer": "", "date": "", "evidence": ""},
+    "security_and_tooling_risk": {"approved": false, "reviewer": "", "date": "", "evidence": ""},
+    "privacy_support_retention": {"approved": false, "reviewer": "", "date": "", "evidence": ""},
+    "backup_restore_monitoring_rollback": {"approved": false, "reviewer": "", "date": "", "evidence": ""}
+  }
+}

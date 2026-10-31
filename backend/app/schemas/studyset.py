@@ -1,64 +1,42 @@
-from pydantic import BaseModel
-from typing import List, Optional
 import uuid
+from pydantic import Field
+from .auth import StrictModel
+
+
+class StudySetCreate(StrictModel):
+    generation_id: uuid.UUID
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    source_text: str = Field(default="", max_length=12000)
+
+
+class RenameStudySet(StrictModel):
+    title: str = Field(min_length=1, max_length=255)
+
+
 from datetime import datetime
-from ..models.studyset import QuestionType
+from .generate import GeneratedFlashcard, GeneratedQuestion, GeneratedConcept
 
-class FlashcardBase(BaseModel):
-    term: str
-    definition: str
-    order_index: int
 
-class FlashcardDisplay(FlashcardBase):
+class StudySetListDisplay(StrictModel):
     id: uuid.UUID
-    
-    class Config:
-        from_attributes = True
-
-class QuestionBase(BaseModel):
-    question: str
-    answer: str
-    question_type: QuestionType
-    options: Optional[dict] = None
-    order_index: int
-
-class QuestionDisplay(QuestionBase):
-    id: uuid.UUID
-    
-    class Config:
-        from_attributes = True
-
-class StudySetBase(BaseModel):
     title: str
-    summary: str
-    source_text: str
-    concepts: Optional[dict] = None
-
-class StudySetCreate(BaseModel):
-    title: str
-    summary: str
-    source_text: str
-    concepts: Optional[dict] = None
-    flashcards: List[FlashcardBase]
-    questions: List[QuestionBase]
-
-class StudySetDisplay(StudySetBase):
-    id: uuid.UUID
-    user_id: uuid.UUID
     created_at: datetime
     updated_at: datetime
-    flashcards: List[FlashcardDisplay]
-    questions: List[QuestionDisplay]
 
-    class Config:
-        from_attributes = True
 
-class StudySetListDisplay(StudySetBase):
-    id: uuid.UUID
-    user_id: uuid.UUID
-    created_at: datetime
-    updated_at: datetime
-    # Omitting nested full arrays for the list endpoint
-    
-    class Config:
-        from_attributes = True
+class StudySetDisplay(StudySetListDisplay):
+    source_text: str
+    summary: str
+    flashcards: list[GeneratedFlashcard]
+    questions: list[GeneratedQuestion]
+    concepts: list[GeneratedConcept]
+
+
+class StudySetPage(StrictModel):
+    items: list[StudySetListDisplay]
+    total: int
+
+
+class StudySetExport(StrictModel):
+    version: int
+    sets: list[StudySetDisplay]

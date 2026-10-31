@@ -1,0 +1,77 @@
+name: Quality gates
+on: [push, pull_request]
+permissions:
+  contents: read
+concurrency:
+  group: qa-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ['3.11', '3.12']
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: qa
+          POSTGRES_PASSWORD: disposable-ci-password
+          POSTGRES_DB: studymind_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U qa -d studymind_test"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      TEST_DATABASE_URL: postgresql+asyncpg://qa:disposable-ci-password@localhost:5432/studymind_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      - run: python -m pip install -r backend/requirements-dev.txt
+      - run: ruff check backend --select F401
+      - run: ruff format --check backend
+      - run: python -m pytest -q backend/tests
+      - run: pip-audit -r backend/requirements-dev.txt --progress-spinner off
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      - run: python -m pip install -r backend/requirements-dev.txt
+      - run: npm ci
+        working-directory: frontend
+      - run: node scripts/audit-web.mjs
+      - run: npm run lint && npm run test:unit && npm run build
+        working-directory: frontend
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: npm run test:e2e
+        working-directory: frontend
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-failure-traces
+          path: frontend/test-results
+          retention-days: 3
+  containers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f backend/Dockerfile -t studymind-api .
+      - run: docker build -f frontend/Dockerfile -t studymind-web .
+      - run: docker run --rm -e APP_DOMAIN=localhost -e PROXY_TOKEN=qa studymind-web caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+        env:
+          APP_DOMAIN: localhost

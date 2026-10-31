@@ -1,147 +1,214 @@
-import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import Home from './pages/Home';
-import Results from './pages/Results';
-import Dashboard from './pages/Dashboard';
-import Auth from './pages/Auth';
-
-/* ── Theme hook — syncs dark class to <html> ─────────── */
-function useTheme() {
-  const [dark, setDark] = useState(() => {
-    const saved = localStorage.getItem('theme');
-    if (saved) return saved === 'dark';
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
-
-  useEffect(() => {
-    if (dark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    localStorage.setItem('theme', dark ? 'dark' : 'light');
-  }, [dark]);
-
-  return [dark, setDark];
-}
-
-/* ── Toggle button ───────────────────────────────────── */
-function ThemeToggle({ dark, setDark }) {
-  return (
-    <button
-      onClick={() => setDark(d => !d)}
-      aria-label="Toggle theme"
-      title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
-      className="relative w-9 h-9 rounded-xl flex items-center justify-center active:scale-90"
-      style={{
-        backgroundColor: 'var(--c-bg-muted)',
-        border: '1px solid var(--c-border)',
-        color: 'var(--c-text-muted)',
-        transition: 'all 0.2s ease',
-      }}
-    >
-      {/* Sun */}
-      <svg
-        className="w-[18px] h-[18px] absolute"
-        style={{
-          opacity: dark ? 0 : 1,
-          transform: dark ? 'rotate(90deg) scale(0.5)' : 'rotate(0deg) scale(1)',
-          transition: 'opacity 0.3s, transform 0.4s',
-        }}
-        fill="none" stroke="currentColor" viewBox="0 0 24 24"
-      >
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-          d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-      </svg>
-      {/* Moon */}
-      <svg
-        className="w-[18px] h-[18px] absolute"
-        style={{
-          opacity: dark ? 1 : 0,
-          transform: dark ? 'rotate(0deg) scale(1)' : 'rotate(-90deg) scale(0.5)',
-          transition: 'opacity 0.3s, transform 0.4s',
-        }}
-        fill="none" stroke="currentColor" viewBox="0 0 24 24"
-      >
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-          d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-      </svg>
-    </button>
-  );
-}
-
-/* ── Header ──────────────────────────────────────────── */
-function Header({ dark, setDark }) {
-  const [scrolled, setScrolled] = useState(false);
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    window.addEventListener('scroll', onScroll);
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
-  return (
-    <header
-      style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
-        padding: '0.625rem 1rem',
-        backgroundColor: scrolled ? 'var(--c-bg-card)' : 'transparent',
-        borderBottom: `1px solid var(--c-border)`,
-        backdropFilter: scrolled ? 'blur(20px)' : 'none',
-        transition: 'background-color 0.3s ease',
-        boxShadow: scrolled ? '0 1px 0 var(--c-border)' : 'none',
-      }}
-    >
-      <div className="max-w-4xl mx-auto flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-600 flex items-center justify-center shadow-lg shadow-violet-500/30 transition-all duration-300 group-hover:scale-105 group-hover:shadow-violet-500/50">
-            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5"
-                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-          </div>
-          <span className="text-xl font-bold bg-gradient-to-r from-violet-600 to-fuchsia-500 bg-clip-text text-transparent tracking-tight">
-            StudyMind
-          </span>
-        </Link>
-
-        <nav className="flex items-center gap-2">
-          <Link to="/dashboard" className="nav-link">Dashboard</Link>
-          <Link to="/auth" className="btn-violet-ghost text-sm font-semibold px-4 py-1.5 rounded-lg">
-            Sign In
-          </Link>
-          <ThemeToggle dark={dark} setDark={setDark} />
-        </nav>
-      </div>
-    </header>
-  );
-}
-
-/* ── Routes ──────────────────────────────────────────── */
-function AnimatedRoutes() {
+import {
+  createBrowserRouter,
+  RouterProvider,
+  Outlet,
+  Link,
+  Navigate,
+  useLocation,
+  useRouteError,
+} from "react-router-dom";
+import { useEffect, useState } from "react";
+import { AuthProvider, useAuth } from "./context/Auth";
+import { DraftProvider } from "./context/Draft";
+import Home from "./pages/Home";
+import Results from "./pages/Results";
+import Dashboard from "./pages/Dashboard";
+import Auth from "./pages/Auth";
+import Account from "./pages/Account";
+function Protected({ children }) {
+  const { user, ready } = useAuth();
   const location = useLocation();
+  if (!ready) return <p role="status">Reconnecting your account…</p>;
+  return user ? (
+    <div key={user.id}>{children}</div>
+  ) : (
+    <Navigate
+      to="/auth"
+      state={{ from: location.pathname + location.search }}
+      replace
+    />
+  );
+}
+function Layout() {
+  const { user, ready } = useAuth();
+  const location = useLocation();
+  const [dark, setDark] = useState(() => {
+    try {
+      return localStorage.getItem("theme") !== "light";
+    } catch {
+      return true;
+    }
+  });
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", dark);
+    try {
+      localStorage.setItem("theme", dark ? "dark" : "light");
+    } catch {
+      /* Theme remains usable without storage. */
+    }
+  }, [dark]);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    document.querySelector("main h1")?.focus();
+  }, [location.pathname]);
   return (
-    <main className="max-w-4xl mx-auto px-4 py-8">
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<Home />} />
-        <Route path="/results/:id" element={<Results />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/auth" element={<Auth />} />
-      </Routes>
+    <DraftProvider>
+      <a className="skip-link" href="#main">
+        Skip to content
+      </a>
+      <header className="site-header">
+        <div className="shell flex flex-wrap items-center justify-between gap-3">
+          <Link to="/" className="brand">
+            <span className="brand-icon" aria-hidden="true">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+              >
+                <path
+                  d="M3 5h7l2 2 2-2h7v14h-7l-2 2-2-2H3zM12 7v14"
+                  strokeWidth="2"
+                />
+              </svg>
+            </span>
+            <span>StudyMind</span>
+          </Link>
+          <nav
+            aria-label="Main navigation"
+            className="flex flex-wrap items-center gap-4"
+          >
+            <Link to="/dashboard">Saved sets</Link>
+            {ready && user ? (
+              <Link to="/account">Account</Link>
+            ) : (
+              <Link to="/auth">Sign in</Link>
+            )}
+            <button
+              className="theme-toggle"
+              onClick={() => setDark((value) => !value)}
+              aria-label={
+                dark ? "Switch to light theme" : "Switch to dark theme"
+              }
+            >
+              {dark ? "☀" : "☾"}
+            </button>
+          </nav>
+        </div>
+      </header>
+      <main id="main" className="shell py-10">
+        <Outlet />
+      </main>
+      <footer className="shell border-t border-slate-300 py-6 text-sm dark:border-slate-700">
+        <Link to="/privacy">Privacy and data</Link>
+        <p className="muted mt-2">
+          Study aids generated from your notes. Check important facts against
+          your course material.
+        </p>
+      </footer>
+    </DraftProvider>
+  );
+}
+function Privacy() {
+  return (
+    <article className="prose-study">
+      <h1 tabIndex={-1}>Your notes, your choice</h1>
+      <p>
+        Generating study aids sends the text you approve to Anthropic. Use
+        material you have permission to share and remove sensitive personal
+        information first.
+      </p>
+      <p>
+        Unsaved generated drafts are recoverable for one hour. Quota records
+        cover a rolling 24-hour window; scheduled cleanup removes expired data.
+        Saved sets stay private to your account until you delete them; saving
+        source notes is optional. You can export your saved material or delete
+        your account in Account.
+      </p>
+      <p>
+        Access tokens stay in memory. An HttpOnly browser cookie keeps you
+        signed in for up to seven days. Only the theme preference is stored in
+        localStorage. No camera, microphone or advertising tracker is used.
+      </p>
+      <p>
+        Deleting records removes live application access. Hosting logs and
+        restricted backups follow the operator’s documented retention policy.
+        Contact the service operator for support and the applicable hosting,
+        provider and backup retention details.
+      </p>
+    </article>
+  );
+}
+function RouteError() {
+  useRouteError();
+  return (
+    <main className="shell py-16">
+      <h1>We couldn’t display this screen</h1>
+      <p className="muted mt-3">
+        Reload to reconnect. Saved study sets remain in your account.
+      </p>
+      <button className="btn mt-5" onClick={() => window.location.reload()}>
+        Reload StudyMind
+      </button>
     </main>
   );
 }
-
-/* ── App root ─────────────────────────────────────────── */
+const router = createBrowserRouter([
+  {
+    element: <Layout />,
+    errorElement: <RouteError />,
+    children: [
+      { path: "/", element: <Home /> },
+      {
+        path: "/results/:id",
+        element: (
+          <Protected>
+            <Results />
+          </Protected>
+        ),
+      },
+      {
+        path: "/dashboard",
+        element: (
+          <Protected>
+            <Dashboard />
+          </Protected>
+        ),
+      },
+      {
+        path: "/account",
+        element: (
+          <Protected>
+            <Account />
+          </Protected>
+        ),
+      },
+      { path: "/privacy", element: <Privacy /> },
+      { path: "/auth", element: <Auth key="login" mode="login" /> },
+      {
+        path: "/auth/register",
+        element: <Auth key="register" mode="register" />,
+      },
+      { path: "/auth/forgot", element: <Auth key="forgot" mode="forgot" /> },
+      { path: "/auth/verify", element: <Auth key="verify" mode="verify" /> },
+      { path: "/auth/reset", element: <Auth key="reset" mode="reset" /> },
+      {
+        path: "*",
+        element: (
+          <section>
+            <h1 tabIndex={-1}>Page not found</h1>
+            <Link to="/">Return to your notes</Link>
+          </section>
+        ),
+      },
+    ],
+  },
+]);
 export default function App() {
-  const [dark, setDark] = useTheme();
   return (
-    <BrowserRouter>
-      <div className="theme-root">
-        <Header dark={dark} setDark={setDark} />
-        <AnimatedRoutes />
-      </div>
-    </BrowserRouter>
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
   );
 }

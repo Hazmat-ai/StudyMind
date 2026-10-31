@@ -1,273 +1,170 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ══════════════════════════════════════════════════════════
-   CSS Custom Properties — auto-switch via .dark on html
-   ══════════════════════════════════════════════════════════ */
-:root {
-  /* backgrounds */
-  --c-bg:          #f9fafb;
-  --c-bg-card:     #ffffff;
-  --c-bg-input:    #ffffff;
-  --c-bg-muted:    #f3f4f6;
-  --c-bg-hover:    #f3f4f6;
-  /* borders */
-  --c-border:      #e5e7eb;
-  --c-border-hover:#d1d5db;
-  /* text */
-  --c-text:        #111827;
-  --c-text-muted:  #6b7280;
-  --c-text-hint:   #9ca3af;
-  /* brand */
-  --c-violet:      #7c3aed;
-  --c-violet-bg:   rgba(124,58,237,0.08);
-  --c-violet-border: rgba(124,58,237,0.25);
-  /* glow */
-  --c-glow:        0 0 40px rgba(124,58,237,0.08), 0 4px 24px rgba(0,0,0,0.06);
-  /* ambient gradient */
-  --c-ambient:     radial-gradient(ellipse 80% 40% at 50% -10%, rgba(124,58,237,0.07) 0%, transparent 60%);
-}
-
-html.dark {
-  /* backgrounds */
-  --c-bg:          #09090b;
-  --c-bg-card:     #111113;
-  --c-bg-input:    #111113;
-  --c-bg-muted:    #18181b;
-  --c-bg-hover:    #1c1c1f;
-  /* borders */
-  --c-border:      #27272a;
-  --c-border-hover:#3f3f46;
-  /* text */
-  --c-text:        #fafafa;
-  --c-text-muted:  #a1a1aa;
-  --c-text-hint:   #52525b;
-  /* brand */
-  --c-violet:      #a78bfa;
-  --c-violet-bg:   rgba(167,139,250,0.12);
-  --c-violet-border: rgba(167,139,250,0.3);
-  /* glow */
-  --c-glow:        0 0 40px rgba(139,92,246,0.2), 0 8px 32px rgba(0,0,0,0.6);
-  /* ambient gradient */
-  --c-ambient:     radial-gradient(ellipse 80% 60% at 50% -20%, rgba(139,92,246,0.18) 0%, transparent 60%),
-                   radial-gradient(ellipse 50% 40% at 100% 100%, rgba(99,102,241,0.1) 0%, transparent 50%);
-}
-
-/* ── Base ─────────────────────────────────────────────── */
 @layer base {
   html {
-    font-family: 'Inter', sans-serif;
-    scroll-behavior: smooth;
+    @apply min-w-[320px] scroll-smooth;
   }
-
-  ::selection {
-    background-color: rgba(124,58,237,0.2);
-    color: var(--c-text);
+  body {
+    @apply m-0 bg-slate-50 font-sans text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+  }
+  h1 {
+    @apply text-4xl font-semibold leading-tight tracking-tight sm:text-5xl;
+  }
+  h2 {
+    @apply text-2xl font-semibold leading-snug tracking-tight;
+  }
+  h3 {
+    @apply text-lg font-semibold leading-relaxed;
+  }
+  a {
+    @apply text-violet-700 underline underline-offset-4 dark:text-violet-300;
+  }
+  button,
+  input,
+  textarea,
+  select {
+    @apply font-sans;
+  }
+  button {
+    @apply cursor-pointer;
+  }
+  button:disabled,
+  input:disabled {
+    @apply cursor-not-allowed opacity-50;
+  }
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [role="tabpanel"]:focus-visible {
+    @apply outline outline-2 outline-offset-4 outline-violet-600 dark:outline-violet-300;
+  }
+  h1:focus {
+    @apply outline-none;
+  }
+  input[type="checkbox"],
+  input[type="radio"] {
+    @apply h-4 w-4 shrink-0 accent-violet-700;
   }
 }
-
-/* ── Semantic utilities (use CSS vars) ─────────────────── */
 @layer components {
-  /* App root wrapper */
-  .theme-root {
-    background-color: var(--c-bg);
-    background-image: var(--c-ambient);
-    background-attachment: fixed;
-    color: var(--c-text);
-    min-height: 100vh;
-    transition: background-color 0.35s ease, color 0.25s ease;
-    -webkit-font-smoothing: antialiased;
+  .shell {
+    @apply mx-auto max-w-4xl px-4 sm:px-6;
   }
-
-  /* Cards / panels */
-  .card {
-    background-color: var(--c-bg-card);
-    border: 1px solid var(--c-border);
-    border-radius: 1rem;
-    transition: background-color 0.25s ease, border-color 0.25s ease;
+  .site-header {
+    @apply sticky top-0 z-30 border-b border-slate-200 bg-white/95 py-4 backdrop-blur dark:border-slate-700 dark:bg-slate-950/95;
   }
-
-  .card-hover:hover {
-    border-color: var(--c-border-hover);
-    transform: translateY(-2px);
+  .site-header a {
+    @apply no-underline;
   }
-
-  /* Inputs & text areas */
-  .input-base {
-    background-color: var(--c-bg-input);
-    border: 1px solid var(--c-border);
-    color: var(--c-text);
-    transition: background-color 0.25s ease, border-color 0.25s ease;
+  .brand {
+    @apply flex items-center gap-3 text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100;
   }
-
-  /* Muted surface */
-  .surface-muted {
-    background-color: var(--c-bg-muted);
-    border: 1px solid var(--c-border);
-    transition: background-color 0.25s ease;
+  .brand-icon {
+    @apply flex h-9 w-9 items-center justify-center rounded-xl bg-violet-700 text-white;
   }
-
-  /* Text colors */
-  .text-primary   { color: var(--c-text);       }
-  .text-secondary { color: var(--c-text-muted);  }
-  .text-hint      { color: var(--c-text-hint);   }
-
-  /* Violet accent button */
-  .btn-violet-ghost {
-    background-color: var(--c-violet-bg);
-    border: 1px solid var(--c-violet-border);
-    color: var(--c-violet);
-    transition: all 0.2s ease;
+  .theme-toggle {
+    @apply rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100;
   }
-  .btn-violet-ghost:hover {
-    filter: brightness(1.1);
+  .skip-link {
+    @apply sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:p-3 focus:text-violet-800;
   }
-
-  /* Ghost button */
-  .btn-ghost {
-    background-color: var(--c-bg-muted);
-    border: 1px solid var(--c-border);
-    color: var(--c-text-muted);
-    transition: all 0.2s ease;
+  .panel {
+    @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7 dark:border-slate-700 dark:bg-slate-900;
   }
-  .btn-ghost:hover {
-    background-color: var(--c-bg-hover);
-    border-color: var(--c-border-hover);
-    color: var(--c-text);
+  .muted {
+    @apply text-slate-600 dark:text-slate-300;
   }
-
-  /* Nav link */
-  .nav-link {
-    color: var(--c-text-muted);
-    border-radius: 0.5rem;
-    padding: 0.375rem 0.75rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
+  .eyebrow {
+    @apply mb-3 text-xs font-bold uppercase tracking-[0.16em] text-violet-700 dark:text-violet-300;
   }
-  .nav-link:hover {
-    color: var(--c-text);
-    background-color: var(--c-bg-muted);
+  .btn {
+    @apply inline-flex min-h-11 items-center justify-center rounded-xl border border-violet-700 bg-violet-700 px-5 py-3 text-sm font-semibold text-white no-underline hover:bg-violet-800 disabled:hover:bg-violet-700 dark:text-white;
   }
-
-  /* Glow card */
-  .glow-card {
-    box-shadow: var(--c-glow);
+  .btn-secondary {
+    @apply inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 no-underline hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700;
   }
-
-  /* Tab bar */
-  .tab-bar {
-    background-color: var(--c-bg-muted);
-    border: 1px solid var(--c-border);
-    padding: 0.25rem;
-    border-radius: 0.75rem;
-    transition: background-color 0.25s ease;
+  .text-button {
+    @apply text-sm font-semibold text-violet-700 underline underline-offset-4 dark:text-violet-300;
   }
-
-  .tab-btn {
-    color: var(--c-text-muted);
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.625rem 0.75rem;
-    border-radius: 0.5rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition: all 0.25s ease;
+  .danger {
+    @apply text-rose-700 dark:text-rose-300;
   }
-  .tab-btn:hover:not(.tab-btn-active) {
-    color: var(--c-text);
-    background-color: var(--c-bg-hover);
+  .field {
+    @apply flex flex-col gap-2 text-sm font-semibold;
   }
-  .tab-btn-active {
-    background-color: #7c3aed;
-    color: #ffffff;
-    box-shadow: 0 4px 12px rgba(124,58,237,0.35);
+  .field input,
+  .field textarea,
+  .field select {
+    @apply w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base font-normal text-slate-900 placeholder:text-slate-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-400;
   }
-
-  .tab-count {
-    font-size: 0.7rem;
-    font-weight: 700;
-    padding: 0.125rem 0.375rem;
-    border-radius: 0.375rem;
-    background-color: var(--c-bg-hover);
-    color: var(--c-text-muted);
-    border: 1px solid var(--c-border);
-    transition: all 0.25s;
+  .field textarea {
+    @apply resize-y leading-7;
   }
-  .tab-btn-active .tab-count {
-    background-color: rgba(255,255,255,0.2);
-    color: #ffffff;
-    border-color: transparent;
+  .notice-error {
+    @apply rounded-xl border border-rose-300 bg-rose-50 p-4 text-sm leading-6 text-rose-900 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-100;
   }
-
-  /* Feature badge */
-  .feature-badge {
-    display: flex;
-    align-items: center;
-    gap: 0.375rem;
-    font-size: 0.75rem;
-    font-weight: 500;
-    background-color: var(--c-bg-card);
-    border: 1px solid var(--c-border);
-    color: var(--c-text-muted);
-    border-radius: 9999px;
-    padding: 0.25rem 0.75rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-    transition: all 0.25s ease;
+  .notice-success {
+    @apply rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-sm leading-6 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-100;
   }
-
-  /* Answer reveal box */
-  .answer-box {
-    background-color: #f0fdf4;
-    border: 1px solid #bbf7d0;
-    border-radius: 0.75rem;
-    padding: 1.25rem;
+  .notice-neutral {
+    @apply rounded-xl border border-slate-300 bg-slate-100 p-4 text-sm text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200;
   }
-
-  html.dark .answer-box {
-    background-color: rgba(21,128,61,0.08);
-    border-color: rgba(21,128,61,0.2);
+  .skeleton {
+    @apply rounded-xl bg-slate-200 dark:bg-slate-800;
   }
-
-  /* Error box */
-  .error-box {
-    background-color: #fef2f2;
-    border: 1px solid #fecaca;
-    color: #dc2626;
-    border-radius: 0.75rem;
-    padding: 1rem;
+  .tabs {
+    @apply flex flex-wrap gap-2 border-b border-slate-300 pb-3 dark:border-slate-700;
   }
-
-  html.dark .error-box {
-    background-color: rgba(220,38,38,0.08);
-    border-color: rgba(220,38,38,0.25);
-    color: #f87171;
+  .tab {
+    @apply min-h-11 rounded-lg border border-transparent px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200;
+  }
+  .tab.active {
+    @apply border-violet-300 bg-violet-100 text-violet-900 dark:border-violet-600 dark:bg-violet-950 dark:text-violet-100;
+  }
+  .prose-study {
+    @apply mx-auto max-w-2xl space-y-5 text-base leading-8;
   }
 }
-
-/* ── Animations ─────────────────────────────────────── */
-@layer utilities {
-  @keyframes fade-up {
-    from { opacity: 0; transform: translateY(14px); }
-    to   { opacity: 1; transform: translateY(0); }
+.flashcard {
+  width: 100%;
+  perspective: 1200px;
+  text-align: center;
+}
+.flashcard-inner {
+  display: grid;
+  min-height: 18rem;
+  transform-style: preserve-3d;
+  transition: transform 0.35s ease;
+}
+.flashcard.flipped .flashcard-inner {
+  transform: rotateY(180deg);
+}
+.flashcard-face {
+  grid-area: 1/1;
+  display: flex;
+  min-height: 18rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  backface-visibility: hidden;
+  overflow-wrap: anywhere;
+  @apply rounded-2xl border border-violet-300 bg-violet-50 p-8 text-slate-900 dark:border-violet-700 dark:bg-violet-950 dark:text-slate-100;
+}
+.flashcard-back {
+  transform: rotateY(180deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
   }
-
-  @keyframes shimmer {
-    0%   { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-  }
-
-  @keyframes spin-slow {
-    to { transform: rotate(360deg); }
-  }
-
-  .animate-fade-up {
-    animation: fade-up 0.5s ease-out forwards;
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
   }
 }
