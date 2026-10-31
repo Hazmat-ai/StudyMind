@@ -1,20 +1,21 @@
 import uuid
-import datetime
+from datetime import datetime, timezone
+from sqlalchemy import String, DateTime, Boolean, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy import String, DateTime
 from ..database import Base
-from typing import List, TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from .studyset import StudySet
+
+def now():
+    return datetime.now(timezone.utc)
+
 
 class User(Base):
     __tablename__ = "users"
-
-    id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
-    hashed_password: Mapped[str] = mapped_column(String, nullable=False)
-    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=datetime.datetime.utcnow)
-
-    study_sets: Mapped[List["StudySet"]] = relationship("StudySet", back_populates="user", cascade="all, delete-orphan")
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    email: Mapped[str] = mapped_column(String(254), unique=True, index=True)
+    hashed_password: Mapped[str] = mapped_column(String(255))
+    verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    study_sets = relationship(
+        "StudySet", cascade="all, delete-orphan", passive_deletes=True
+    )

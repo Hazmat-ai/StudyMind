@@ -1,3 +1,18 @@
+# Current production implementation notes (2026-10-31)
+
+These security-critical updates supersede older examples below. Read README.md, SECURITY.md and docs/ before editing. Preserve the focused React 18 + Vite + Tailwind SPA and FastAPI/SQLAlchemy/Alembic/PostgreSQL architecture; do not reintroduce mock results.
+
+- PyJWT replaces python-jose because the latter and a transitive dependency have unpatched audit advisories. HS256 is fixed; sessions, issuer/audience and required claims are validated. React Router 7.18.5 replaces vulnerable v6; the SPA route APIs remain familiar.
+- Python 3.11/3.12 and Node 24 are supported. Runtime dependencies are pinned. Passwords use bcrypt_sha256; legacy bcrypt hashes can upgrade. No token in localStorage. Access tokens stay in memory; rotating HttpOnly Secure first-party refresh cookies reference revocable SQL sessions.
+- Production requires email verification, HTTPS canonical API_ORIGIN/WEB_ORIGIN and PostgreSQL/asyncpg. Recovery/verification links use fragments and hashed one-use tokens. Never log source text, credentials, email tokens or provider bodies.
+- Explicit ANTHROPIC_MODEL is required with a key; the historical claude-sonnet-4-20250514 model is retired. Missing services fail honestly. Only QA dependency overrides may provide fixture material.
+- Bound and validate input/output; reject long notes/PDFs rather than silently truncate. AI calls require explicit provider consent, owner-scoped persisted reservations, idempotency and per-user/global limits. Save source text only on explicit user choice.
+- Use Alembic for startup schema changes, never automatic create_all in development/production. The initial migration requires an empty database; existing data migration needs review. AsyncSession is request scoped.
+- Security middleware, same-origin /api proxy, CSRF, strict origins, trusted proxy authentication, maintenance schedule and release/UAT evidence are part of deployment. The older localStorage/VITE_API_URL/http-model examples below are historical and must not be copied.
+- No release is approved until actual CI, live services, human accessibility/UAT, backups, privacy and security gates are completed. One temporary development-only lint advisory is explicitly documented in SECURITY.md; do not hide or broaden its exception.
+
+---
+
 # StudyMind — Agent Context
 
 This file gives an AI coding assistant full context on the StudyMind project so it can contribute meaningfully without needing long explanations each session. Read this before writing any code.

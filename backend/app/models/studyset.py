@@ -1,56 +1,69 @@
 import uuid
-import datetime
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy import String, DateTime, Text, JSON, ForeignKey, Enum
-from ..database import Base
-from typing import List, TYPE_CHECKING, Optional
-
-if TYPE_CHECKING:
-    from .user import User
-
 import enum
+from datetime import datetime
+from sqlalchemy import String, Text, JSON, ForeignKey, DateTime, Uuid, Integer
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from ..database import Base
+from .user import now
+
 
 class QuestionType(str, enum.Enum):
     short_answer = "short_answer"
     multiple_choice = "multiple_choice"
 
+
 class StudySet(Base):
     __tablename__ = "study_sets"
-
-    id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("users.id"))
-    title: Mapped[str] = mapped_column(String(255), nullable=False)
-    source_text: Mapped[str] = mapped_column(Text, nullable=False)
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    generation_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, unique=True, nullable=True
+    )
+    title: Mapped[str] = mapped_column(String(255))
+    source_text: Mapped[str] = mapped_column(Text, default="")
     summary: Mapped[str] = mapped_column(Text)
-    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=datetime.datetime.utcnow)
-    updated_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
-    concepts: Mapped[Optional[dict]] = mapped_column(JSON)
+    concepts: Mapped[list] = mapped_column(JSON, default=list)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=now, onupdate=now
+    )
+    flashcards = relationship(
+        "Flashcard",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by="Flashcard.order_index",
+        lazy="selectin",
+    )
+    questions = relationship(
+        "Question",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by="Question.order_index",
+        lazy="selectin",
+    )
 
-    user: Mapped["User"] = relationship("User", back_populates="study_sets")
-    flashcards: Mapped[List["Flashcard"]] = relationship("Flashcard", back_populates="study_set", cascade="all, delete-orphan", order_by="Flashcard.order_index")
-    questions: Mapped[List["Question"]] = relationship("Question", back_populates="study_set", cascade="all, delete-orphan", order_by="Question.order_index")
 
 class Flashcard(Base):
     __tablename__ = "flashcards"
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    study_set_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("study_sets.id", ondelete="CASCADE"), index=True
+    )
+    term: Mapped[str] = mapped_column(String(255))
+    definition: Mapped[str] = mapped_column(Text)
+    order_index: Mapped[int] = mapped_column(Integer)
 
-    id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    study_set_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("study_sets.id"))
-    term: Mapped[str] = mapped_column(String(255), nullable=False)
-    definition: Mapped[str] = mapped_column(Text, nullable=False)
-    order_index: Mapped[int] = mapped_column(nullable=False)
-
-    study_set: Mapped["StudySet"] = relationship("StudySet", back_populates="flashcards")
 
 class Question(Base):
     __tablename__ = "questions"
-
-    id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    study_set_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("study_sets.id"))
-    question: Mapped[str] = mapped_column(Text, nullable=False)
-    answer: Mapped[str] = mapped_column(Text, nullable=False)
-    question_type: Mapped[QuestionType] = mapped_column(Enum(QuestionType), nullable=False)
-    options: Mapped[Optional[dict]] = mapped_column(JSON)
-    order_index: Mapped[int] = mapped_column(nullable=False)
-
-    study_set: Mapped["StudySet"] = relationship("StudySet", back_populates="questions")
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    study_set_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("study_sets.id", ondelete="CASCADE"), index=True
+    )
+    question: Mapped[str] = mapped_column(Text)
+    answer: Mapped[str] = mapped_column(Text)
+    question_type: Mapped[str] = mapped_column(String(32))
+    options: Mapped[list] = mapped_column(JSON, default=list)
+    order_index: Mapped[int] = mapped_column(Integer)

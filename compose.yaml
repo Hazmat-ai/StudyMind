@@ -1,0 +1,51 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: studymind
+      POSTGRES_DB: studymind
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Generate DB_PASSWORD}
+    volumes: [database:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U studymind -d studymind"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+  migrate:
+    build: {context: ., dockerfile: backend/Dockerfile}
+    env_file: .env
+    environment: &api_env
+      APP_ENV: production
+      DATABASE_URL: postgresql+asyncpg://studymind:${DB_PASSWORD}@db:5432/studymind
+      WEB_ORIGIN: https://${APP_DOMAIN}
+      API_ORIGIN: https://${APP_DOMAIN}
+    command: [alembic, upgrade, head]
+    depends_on:
+      db: {condition: service_healthy}
+  api:
+    build: {context: ., dockerfile: backend/Dockerfile}
+    env_file: .env
+    environment: *api_env
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    read_only: true
+    tmpfs: [/tmp:size=64M,mode=1777]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 1g
+    pids_limit: 100
+    restart: unless-stopped
+  web:
+    build: {context: ., dockerfile: frontend/Dockerfile}
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?Set APP_DOMAIN}
+      PROXY_TOKEN: ${PROXY_TOKEN:?Generate PROXY_TOKEN}
+    ports: ["80:80", "443:443", "443:443/udp"]
+    volumes: [caddy_data:/data, caddy_config:/config]
+    depends_on: [api]
+    restart: unless-stopped
+volumes:
+  database:
+  caddy_data:
+  caddy_config:
