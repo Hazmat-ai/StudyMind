@@ -14,12 +14,30 @@ async function account(page) {
     .click();
   await expect(page.getByRole("status")).toContainText("Account created");
   await page.getByRole("link", { name: "Sign in", exact: true }).last().click();
+  // The registration and login screens share field labels. Wait for the new
+  // route and component before filling so a remount cannot erase the email.
+  await expect(page).toHaveURL("/auth");
+  await expect(
+    page.getByRole("heading", { name: "Welcome back", exact: true }),
+  ).toBeVisible();
   await page.getByLabel("Email address").fill(email);
+  await expect(page.getByLabel("Email address")).toHaveValue(email);
   await page
     .getByLabel("Password", { exact: true })
     .fill("a strong test passphrase");
+  const loginResponse = page.waitForResponse(
+    (response) =>
+      new URL(response.url()).pathname === "/api/auth/login" &&
+      response.request().method() === "POST",
+  );
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  const response = await loginResponse;
+  expect(response.status(), "Sign-in API response").toBe(200);
+  expect((await response.json()).user.email).toBe(email);
   await expect(page).toHaveURL("/");
+  await expect(
+    page.getByRole("link", { name: "Account", exact: true }),
+  ).toBeVisible();
 }
 async function generate(page) {
   await page.getByLabel("Your notes", { exact: true }).fill(content);
