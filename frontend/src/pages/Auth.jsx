@@ -99,9 +99,17 @@ export default function Auth({ mode }) {
           </label>
         )}
         {mode !== "forgot" && (
-          <label className="field">
-            {mode === "reset" ? "New password" : "Password"}
+          <div className="field">
+            <label htmlFor="auth-password">
+              {mode === "reset" ? "New password" : "Password"}
+            </label>
             <input
+              id="auth-password"
+              aria-describedby={
+                ["register", "reset"].includes(mode)
+                  ? "auth-password-hint"
+                  : undefined
+              }
               type="password"
               required
               minLength={["register", "reset"].includes(mode) ? 12 : 1}
@@ -115,11 +123,11 @@ export default function Auth({ mode }) {
               onChange={(event) => setPassword(event.target.value)}
             />
             {["register", "reset"].includes(mode) && (
-              <span className="muted text-sm">
+              <span id="auth-password-hint" className="muted text-sm">
                 Use at least 12 characters. Long passphrases work well.
               </span>
             )}
-          </label>
+          </div>
         )}
         {["verify", "reset"].includes(mode) && !token ? (
           <p className="notice-error">
